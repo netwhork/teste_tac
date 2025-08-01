@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Login</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-analytics.js";
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+    import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+
+    // Configuração do Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyACAAMkxTdfC51xO2WHZdr9gGsnRKj4Iew",
+      authDomain: "datatac-14d16.firebaseapp.com",
+      projectId: "datatac-14d16",
+      storageBucket: "datatac-14d16.firebasestorage.app",
+      messagingSenderId: "284083501949",
+      appId: "1:284083501949:web:02e5d69234bdd4a0aa2a14",
+      measurementId: "G-29VELGJ0KZ"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const analytics = getAnalytics(app);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // Alternar entre login e cadastro
+    window.toggleForm = function() {
+      document.getElementById("login-form").style.display = 
+        document.getElementById("login-form").style.display === "none" ? "block" : "none";
+      document.getElementById("register-form").style.display = 
+        document.getElementById("register-form").style.display === "none" ? "block" : "none";
+      document.getElementById("title").innerText = 
+        document.getElementById("register-form").style.display === "block" ? "Crie sua conta" : "Olá, bem-vindo de volta.";
+    }
+
+    // Login
+    window.login = async function(event) {
+      event.preventDefault();
+      const email = document.getElementById("user").value;
+      const password = document.getElementById("pass").value;
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+        Swal.fire({
+          icon: "success",
+          title: "Sucesso",
+          text: "Login realizado com sucesso!",
+          timer: 1500,
+          showConfirmButton: false
+        }).then(() => {
+          window.location.href = "dashboard.html"; // Redireciona após login
+        });
+      } catch (error) {
+        Swal.fire("Erro", error.message, "error");
+      }
+    }
+
+    // Cadastro
+    window.register = async function(event) {
+      event.preventDefault();
+      const email = document.getElementById("newUser").value;
+      const password = document.getElementById("newPass").value;
+
+      if (password.length !== 6) {
+        Swal.fire("Erro", "A senha deve ter exatamente 6 dígitos.", "error");
+        return;
+      }
+
+      try {
+        // Criar usuário no Firebase Auth
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+
+        // Criar documento do usuário no Firestore
+        await setDoc(doc(db, "Users", user.uid), {
+          licenca: true,
+          email: email,
+          dataCriacao: new Date()
+        });
+
+        Swal.fire("Conta criada!", "Cadastro realizado com sucesso. Agora faça login.", "success");
+        toggleForm();
+      } catch (error) {
+        Swal.fire("Erro", error.message, "error");
+      }
+    }
+  </script>
+</head>
+<body>
+  <div class="container">
+    <div class="left">
+      <img src="https://hivecloud.com.br/wp-content/uploads/2023/04/logo-hivecloud-bsoft.png" class="logo" alt="Logo Hive"/>
+      <h2 id="title">Olá, bem-vindo de volta.</h2>
+      
+      <!-- FORM LOGIN -->
+      <form id="login-form" onsubmit="login(event)">
+        <label for="user">E-mail *</label>
+        <input type="email" id="user" name="user" placeholder="Digite seu e-mail" required />
+        
+        <label for="pass">Senha *</label>
+        <input type="password" id="pass" name="pass" placeholder="Digite sua senha" maxlength="6" required />
+        
+        <button type="submit" class="btn-login">Entrar</button>
+        
+        <div class="link" style="margin-top: 25px;">
+          Não é cliente? <a onclick="toggleForm()">Cadastre-se agora</a>
+        </div>
+      </form>
+
+      <!-- FORM CADASTRO -->
+      <form id="register-form" onsubmit="register(event)" style="display:none;">
+        <label for="newUser">E-mail *</label>
+        <input type="email" id="newUser" name="newUser" placeholder="Digite seu e-mail" required />
+        
+        <label for="newPass">Senha *</label>
+        <input type="password" id="newPass" name="newPass" placeholder="Crie uma senha de 6 dígitos" maxlength="6" required />
+        
+        <button type="submit" class="btn-login">Cadastrar</button>
+        
+        <div class="link" style="margin-top: 25px;">
+          Já tem conta? <a onclick="toggleForm()">Entrar</a>
+        </div>
+      </form>
+    </div>
+    
+    <div class="right"></div>
+  </div>
+</body>
+</html>

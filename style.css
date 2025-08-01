@@ -1,0 +1,96 @@
+  body,
+  html {
+      height: 100%;
+       font-family: 'Poppins', sans-serif;
+  }
+
+  .container {
+      display: flex;
+      height: 100vh;
+  }
+
+  .left {
+      flex: 0.3;
+      background-color: #fff;
+      padding: 60px 40px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+  }
+
+  .left img.logo {
+      max-width: 180px;
+      margin-bottom: 30px;
+  }
+
+  h2 {
+      font-size: 20px;
+      margin-bottom: 30px;
+      color: #333;
+  }
+
+  label {
+      display: block;
+      margin: 15px 0 5px;
+      font-weight: bold;
+      font-size: 14px;
+      color: #444;
+  }
+
+  input[type="text"],
+  input[type="password"],
+  input[type="email"] {
+      width: 100%;
+      padding: 10px 12px;
+      font-size: 15px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+  }
+
+  .btn-login {
+      background-color: #f58220;
+      color: white;
+      border: none;
+      padding: 12px;
+      border-radius: 6px;
+      width: 100%;
+      font-size: 16px;
+      cursor: pointer;
+      margin-top: 15px;
+  }
+
+  .btn-login:hover {
+      background-color: #e4700c;
+  }
+
+  .link {
+      margin-top: 15px;
+      text-align: center;
+      font-size: 14px;
+  }
+
+  .link a {
+      color: #007bff;
+      text-decoration: none;
+      cursor: pointer;
+  }
+
+  .link a:hover {
+      text-decoration: underline;
+  }
+
+  .right {
+      flex: 0.7;
+      background: url('./assets/images/login.png') no-repeat center center;
+      background-size: cover;
+  }
+
+  @media (max-width: 768px) {
+      .container {
+          flex-direction: column;
+      }
+
+      .right {
+          display: none;
+      }
+  }
