@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>DataTac - Sistema de Planos</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+  <div class="container">
+    <div class="left">
+      <img src="https://hivecloud.com.br/wp-content/uploads/2023/04/logo-hivecloud-bsoft.png" class="logo" alt="Logo Hive"/>
+      <h2 id="title">Olá, bem-vindo de volta.</h2>
+      
+      <!-- FORM LOGIN -->
+      <form id="login-form" onsubmit="handleLogin(event)">
+        <label for="user">E-mail *</label>
+        <input type="email" id="user" name="user" placeholder="Digite seu e-mail" required />
+        
+        <label for="pass">Senha *</label>
+        <input type="password" id="pass" name="pass" placeholder="Digite sua senha" maxlength="6" required />
+        
+        <button type="submit" class="btn-login">Entrar</button>
+        
+        <div class="link" style="margin-top: 25px;">
+          Não é cliente? <a onclick="toggleForm()">Cadastre-se agora</a>
+        </div>
+      </form>
+
+      <!-- FORM CADASTRO -->
+      <form id="register-form" onsubmit="handleRegister(event)" style="display:none;">
+        <label for="newUser">E-mail *</label>
+        <input type="email" id="newUser" name="newUser" placeholder="Digite seu e-mail" required />
+        
+        <label for="newPass">Senha *</label>
+        <input type="password" id="newPass" name="newPass" placeholder="Crie uma senha de 6 dígitos" maxlength="6" required />
+        
+        <button type="submit" class="btn-login">Cadastrar</button>
+        
+        <div class="link" style="margin-top: 25px;">
+          Já tem conta? <a onclick="toggleForm()">Entrar</a>
+        </div>
+      </form>
+    </div>
+    
+    <div class="right"></div>
+  </div>
+
+  <script type="module">
+    import { loginUser, registerUser, upgradeToPremium } from './firebase/config.js';
+
+    // Alternar entre login e cadastro
+    window.toggleForm = function() {
+      const loginForm = document.getElementById("login-form");
+      const registerForm = document.getElementById("register-form");
+      const title = document.getElementById("title");
+      
+      if (loginForm.style.display === "none") {
+        loginForm.style.display = "block";
+        registerForm.style.display = "none";
+        title.innerText = "Olá, bem-vindo de volta.";
+      } else {
+        loginForm.style.display = "none";
+        registerForm.style.display = "block";
+        title.innerText = "Crie sua conta";
+      }
+    }
+
+    // Função de Login
+    window.handleLogin = async function(event) {
+      event.preventDefault();
+      
+      const email = document.getElementById("user").value;
+      const password = document.getElementById("pass").value;
+      
+      // Mostrar loading
+      Swal.fire({
+        title: 'Entrando...',
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        }
+      });
+
+      const result = await loginUser(email, password);
+      
+      Swal.close();
+
+      if (result.success) {
+        Swal.fire({
+          icon: "success",
+          title: "Sucesso",
+          text: "Login realizado com sucesso!",
+          timer: 1500,
+          showConfirmButton: false
+        }).then(() => {
+          window.location.href = "desktop-app/dashboard.html";
+
+        });
+      } else {
+        Swal.fire({
+          icon: "error",
+          title: "Erro no Login",
+          text: result.error
+        });
+      }
+    }
+
+    // Função de Cadastro
+    window.handleRegister = async function(event) {
+      event.preventDefault();
+      
+      const email = document.getElementById("newUser").value;
+      const password = document.getElementById("newPass").value;
+      
+      // Mostrar loading
+      Swal.fire({
+        title: 'Criando conta...',
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        }
+      });
+
+      const result = await registerUser(email, password);
+      
+      Swal.close();
+
+      if (result.success) {
+        Swal.fire({
+          icon: "success",
+          title: "Conta criada!",
+          text: "Cadastro realizado com sucesso! Plano Free ativado automaticamente.",
+          timer: 2500,
+          showConfirmButton: false
+        }).then(() => {
+          toggleForm();
+        });
+      } else {
+        Swal.fire({
+          icon: "error",
+          title: "Erro no Cadastro",
+          text: result.error
+        });
+      }
+    }
+
+    // Função para upgrade para Premium (será usada no dashboard)
+    window.handleUpgradeToPremium = async function() {
+      Swal.fire({
+        title: 'Processando...',
+        text: 'Gerando QR Code PIX...',
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        }
+      });
+
+      const result = await upgradeToPremium();
+      
+      Swal.close();
+
+      if (result.success) {
+        const { qrCode, qrCodeText } = result.data;
+        
+        Swal.fire({
+          title: 'Upgrade para Premium - R$ 29,90',
+          html: `
+            <div style="text-align: center;">
+              <p style="margin-bottom: 15px;">Escaneie o QR Code ou copie o código PIX:</p>
+              <img src="data:image/png;base64,${qrCode}" style="max-width: 200px; margin-bottom: 15px;">
+              <br>
+              <textarea readonly style="width: 100%; height: 80px; font-size: 11px; margin-bottom: 10px; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">${qrCodeText}</textarea>
+              <p style="color: #666; font-size: 12px;">O pagamento será confirmado automaticamente em alguns segundos.</p>
+            </div>
+          `,
+          showCancelButton: true,
+          confirmButtonText: 'Copiar PIX',
+          cancelButtonText: 'Fechar',
+          width: '500px'
+        }).then((result) => {
+          if (result.isConfirmed) {
+            navigator.clipboard.writeText(qrCodeText).then(() => {
+              Swal.fire({
+                icon: 'success',
+                title: 'Copiado!',
+                text: 'Código PIX copiado para a área de transferência',
+                timer: 1500,
+                showConfirmButton: false
+              });
+            });
+          }
+        });
+      } else {
+        Swal.fire({
+          icon: 'error',
+          title: 'Erro no Upgrade',
+          text: result.error
+        });
+      }
+    }
+
+    // Verificar se usuário já está logado
+    window.addEventListener('load', () => {
+      // Esta função pode ser expandida para verificar se o usuário já está autenticado
+      console.log('Aplicação carregada');
+    });
+  </script>
+</body>
+</html>

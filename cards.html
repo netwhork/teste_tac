@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>4 Cards Pricing - Gabriel</title>
+<style>
+  body {
+    margin: 2rem;
+    background: #f0f0f0;
+    font-family: Arial, sans-serif;
+  }
+
+  .cards-container {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  /* Neo Brutalism pricing card */
+  .card {
+    width: 190px;
+    background: #00ffa0;
+    padding: 1rem;
+    border-radius: 1rem;
+    border: 0.5vmin solid #05060f;
+    box-shadow: 0.4rem 0.4rem #05060f;
+    overflow: hidden;
+    color: black;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .pricing-plan {
+    color: #05060f;
+    font-size: 1.3rem;
+    line-height: 1.25;
+    font-weight: 700;
+  }
+
+  .price-value {
+    display: flex;
+    color: #05060f;
+    font-size: 1.8rem;
+    line-height: 1.25;
+    font-weight: 700;
+  }
+
+  #priceDiscountCent {
+    font-size: 1rem;
+    align-self: flex-end;
+    margin-left: 4px;
+  }
+
+  .pricing-note {
+    opacity: 0.8;
+    font-size: 0.9rem;
+  }
+
+  .check-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    padding-left: 0;
+    list-style: none;
+  }
+
+  .check-list-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.9rem;
+  }
+
+  .check-list-item svg {
+    fill: #664eff;
+    flex-shrink: 0;
+  }
+</style>
+</head>
+<body>
+
+<svg style="display:none;" aria-hidden="true" focusable="false">
+  <symbol id="check-icon" viewBox="0 0 30 30" >
+    <path d="M27.5 7.53L24.46 4.54c-.31-.3-.81-.3-1.12 0L11.03 16.67 6.82 12.52c-.3-.29-.83-.29-1.13 0L2.64 15.54c-.31.3-.31.79 0 1.09L10.44 24.32c.15.15.35.23.55.23.2 0 .4-.08.56-.23L27.5 8.63c.15-.14.23-.34.23-.54 0-.21-.08-.4-.23-.52z"/>
+  </symbol>
+</svg>
+
+<div class="cards-container">
+  <div class="card" role="region" aria-label="Plano Starter">
+    <p class="pricing-plan">Starter</p>
+    <div class="price-value" data-currency="$ USD" data-currency-simple="USD">
+      <p class="price-number">$<span class="price-integer">0</span></p>
+      <div id="priceDiscountCent">/mo</div>
+    </div>
+    <div class="pricing-note">free forever</div>
+    <ul class="check-list" role="list">
+      <li class="check-list-item"><svg width="16" height="16" aria-hidden="true"><use href="#check-icon"></use></svg>Lorem Ipsum</li>
+      <li class="check-list-item"><svg width="16" height="16" aria-hidden="true"><use href="#check-icon"></use></svg>Lorem Ipsum</li>
+      <li class="check-list-item"><svg width="16" height="16" aria-hidden="true"><use href="#check-icon"></use></svg>Lorem Ipsum</li>
+      <li class="check-list-item"><svg width="16" height="16" aria-hidden="true"><use href="#check-icon"></use></svg>Lorem Ipsum</li>
+    </ul>
+  </div>
+
+  <div class="card" role="region" aria-label="Plano Starter">
+    <p class="pricing-plan">Starter</p>
+    <div class="price-value" data-currency="$ USD" data-currency-simple="USD">
+      <p class="price-number">$<span class="price-integer">0</span></p>
+      <div id="priceDiscountCent">/mo</div>
+    </div>
+    <div class="pricing-note">free forever</div>
+    <ul class="check-list" role="list">
+      <li class="check-list-item"><svg width="16" height="16" aria-hidden="true"><use href="#check-icon"></use></svg>Lorem Ipsum</li>
+      <li class="check-list-item"><svg width="16" height="16" aria-hidden="true"><use href="#check-icon"></use></svg>Lorem Ipsum</li>
+      <li class="check-list-item"><svg width="16" height="16" aria-hidden="true"><use href="#check-icon"></use></svg>Lorem Ipsum</li>
+      <li class="check-list-item"><svg width="16" height="16" aria-hidden="true"><use href="#check-icon"></use></svg>Lorem Ipsum</li>
+    </ul>
+  </div>
+
+  <div class="card" role="region" aria-label="Plano Starter">
+    <p class="pricing-plan">Starter</p>
+    <div class="price-value" data-currency="$ USD" data-currency-simple="USD">
+      <p class="price-number">$<span class="price-integer">0</span></p>
+      <div id="priceDiscountCent">/mo</div>
+    </div>
+    <div class="pricing-note">free forever</div>
+    <ul class="check-list" role="list">
+      <li class="check-list-item"><svg width="16" height="16" aria-hidden="true"><use href="#check-icon"></use></svg>Lorem Ipsum</li>
+      <li class="check-list-item"><svg width="16" height="16" aria-hidden="true"><use href="#check-icon"></use></svg>Lorem Ipsum</li>
+      <li class="check-list-item"><svg width="16" height="16" aria-hidden="true"><use href="#check-icon"></use></svg>Lorem Ipsum</li>
+      <li class="check-list-item"><svg width="16" height="16" aria-hidden="true"><use href="#check-icon"></use></svg>Lorem Ipsum</li>
+    </ul>
+  </div>
+
+  <div class="card" role="region" aria-label="Plano Starter">
+    <p class="pricing-plan">Starter</p>
+    <div class="price-value" data-currency="$ USD" data-currency-simple="USD">
+      <p class="price-number">$<span class="price-integer">0</span></p>
+      <div id="priceDiscountCent">/mo</div>
+    </div>
+    <div class="pricing-note">free forever</div>
+    <ul class="check-list" role="list">
+      <li class="check-list-item"><svg width="16" height="16" aria-hidden="true"><use href="#check-icon"></use></svg>Lorem Ipsum</li>
+      <li class="check-list-item"><svg width="16" height="16" aria-hidden="true"><use href="#check-icon"></use></svg>Lorem Ipsum</li>
+      <li class="check-list-item"><svg width="16" height="16" aria-hidden="true"><use href="#check-icon"></use></svg>Lorem Ipsum</li>
+      <li class="check-list-item"><svg width="16" height="16" aria-hidden="true"><use href="#check-icon"></use></svg>Lorem Ipsum</li>
+    </ul>
+  </div>
+</div>
+
+</body>
+</html>
