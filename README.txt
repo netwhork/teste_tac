@@ -19,3 +19,10 @@ O usuário paga mais conforme ganha mais comodidade.
 
 agora faz a consulta de arquivos cadastrados rápido quando clicar em pesquisar!
 más indo pela navegação ele carrega diferente, dando go live direto ele já carrega e exibe os dados cadastrados!
+
+AGORA ESTÁ CARREGANDO O HTML CORRETAMENTE SÓ O DASH QUE ESTÁ BUGADO E PRECISA RECARREGAR QUANDO AVRE, VERIFICAR MOTIVO!
+ESTÁ SENDO LIDO OS AQUIVOS PDF'S PERFEITAMENTE, PORÉM MICRISOFT PRINT ELE NÃO LÊ, AINDA NÃO ESTÁ CADASTRANDO NO BANCO DE DADOS
+A INTENÇAÕ É O USUÁRIO DROGAR O ARQUIVO PDF, ELE CADASTRAR O VEICULO COM PLACA E RENAVAN
+DADOS P/ GRAVAR DO CERTIFICADO PRELIMINAR!
+
+ELE PRECISA TAMBÉM COMEÇAR A RETORNAR NO  Gerenciar "CERTIFICADO PRELIMINAR" NO DASH OS DADOS DO BANCO DE DADOS!

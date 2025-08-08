@@ -1,21 +1,26 @@
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard</title>
-  <link rel="stylesheet" href="style_dash.css">
+  <title>Dashboard - Sistema de Certificados</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <link rel="stylesheet" href="style_dash.css">
 
 </head>
+</head>
+
 <body>
 
+  <!-- Sidebar -->
   <nav class="sidebar" id="sidebar">
     <div class="menu-header">U</div>
     <ul class="menu-categories">
       <li class="menu-category">
-        <a class="category-header" href="#" data-page="dashControle.html">
+        <a class="category-header" href="#" data-page="dashboard.html">
           <i class="fa-solid fa-chart-line"></i>
           <span>Dashboard</span>
         </a>
@@ -60,73 +65,935 @@
     </div>
   </nav>
 
+  <!-- Main Content -->
   <main class="main-content">
-    <div class="content" id="main-content">
-      <h2>Conteúdo principal</h2>
-      <p>Sistema de gestão consulta cronotacógrafo</p>
-      <div class="alert alert-info">
-        <i class="fa-solid fa-info-circle"></i>
-        Selecione uma opção no menu lateral para começar.
+    <!-- Header Bar -->
+    <div class="header-bar">
+      <div class="header-title">
+        <i class="fa-solid fa-tachometer-alt"></i>
+        Dashboard - Sistema de Certificados
+      </div>
+      <div class="header-actions">
+        <button class="btn-certidao" id="btnCertidao">
+          <i class="fa-solid fa-plus"></i>
+          <span>Certidão</span>
+        </button>
+
       </div>
     </div>
+
+    <!-- Content Area -->
+    <div class="content" id="main-content">
+
+      <!-- Stats Cards -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <h3><i class="fa-solid fa-car"></i> Veículos Cadastrados</h3>
+          <div class="number" id="totalVeiculos">0</div>
+        </div>
+        <div class="stat-card">
+          <h3><i class="fa-solid fa-users"></i> Certidões no prazo</h3>
+          <div class="number" id="totalProprietarios">0</div>
+        </div>
+        <div class="stat-card">
+          <h3><i class="fa-solid fa-certificate"></i> Renovadas 2 anos </h3>
+          <div class="number" id="totalCertificados" style="color: rgb(24, 234, 24);">0</div>
+        </div>
+        <div class="stat-card">
+          <h3><i class="fa-solid fa-exclamation-triangle"></i> Vencendo em 30 dias !</h3>
+          <div class="number" id="vencendo30dias" style="color: #ffa500;">0</div>
+        </div>
+      </div>
+
+      <!-- Recent Certificates -->
+      <div class="certificates-section">
+        <div class="section-header">
+          <h3 class="section-title">
+            <i class="fa-solid fa-clock"></i>
+            Gerenciar "CERTIFICADO PRELIMINAR"
+          </h3>
+        </div>
+        <div class="certificates-list" id="certificatesList">
+          <div class="alert alert-info">
+            <i class="fa-solid fa-info-circle"></i>
+            Nenhum certificado processado ainda. Clique em "Certidão" para começar.
+          </div>
+        </div>
+      </div>
+
+    </div>
   </main>
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-  const menuLinks = document.querySelectorAll('.category-header[data-page]');
 
-  // Clique nos menus principais
-  menuLinks.forEach(link => {
-    link.addEventListener('click', function(e) {
-      e.preventDefault();
-      loadPage(this.getAttribute('data-page'));
-    });
-  });
+  <!-- Modal para Upload de Certificados -->
+  <div class="modal-overlay" id="modalCertidao">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">
+          <i class="fa-solid fa-file-certificate"></i>
+          Processar Certificados PDF
+        </h3>
+        <button class="modal-close" id="modalClose">
+          <i class="fa-solid fa-times"></i>
+        </button>
+      </div>
 
-  // Logout com confirmação
-  const logoutButton = document.getElementById('btnLogout');
-  if (logoutButton) {
-    logoutButton.addEventListener('click', function (e) {
-      e.preventDefault();
-      Swal.fire({
-        title: 'Sair do Sistema',
-        text: 'Tem certeza que deseja sair?',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#d33',
-        cancelButtonColor: '#3085d6',
-        confirmButtonText: 'Sim, sair',
-        cancelButtonText: 'Cancelar'
-      }).then((result) => {
-        if (result.isConfirmed) {
-          window.location.href = 'login.html';
+      <div class="dropzone" id="dropzone">
+        <div class="dropzone-icon">
+          <i class="fa-solid fa-cloud-upload-alt"></i>
+        </div>
+        <div class="dropzone-text">Solte o(s) PDF(s) aqui ou clique para selecionar</div>
+        <div class="dropzone-subtext">Suporta múltiplos arquivos PDF</div>
+      </div>
+
+      <input type="file" id="fileInput" class="file-input" multiple accept=".pdf">
+
+      <div class="processing-queue" id="processingQueue" style="display: none;">
+        <h4 style="margin-bottom: 15px; color: #2d3748;">
+          <i class="fa-solid fa-list"></i>
+          Fila de Processamento
+        </h4>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // =====================================
+    // SISTEMA DE GESTÃO DE CERTIFICADOS
+    // =====================================
+
+    // Configuração do PDF.js
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+    // =====================================
+    // CLASSE PRINCIPAL - CertificateManager
+    // =====================================
+    class CertificateManager {
+      constructor() {
+        this.processingQueue = [];
+        this.isProcessing = false;
+        this.modal = null;
+        this.dropzone = null;
+        this.fileInput = null;
+        this.queueContainer = null;
+        this.processedCount = 0;
+        this.stats = {
+          totalVeiculos: 0,
+          totalProprietarios: 0,
+          totalCertificados: 0,
+          vencendo30dias: 0
+        };
+
+        this.init();
+      }
+
+      // =====================================
+      // INICIALIZAÇÃO
+      // =====================================
+      init() {
+        this.setupDOM();
+        this.setupEventListeners();
+        this.loadStats();
+        this.loadRecentCertificates();
+      }
+
+      setupDOM() {
+        this.modal = document.getElementById('modalCertidao');
+        this.dropzone = document.getElementById('dropzone');
+        this.fileInput = document.getElementById('fileInput');
+        this.queueContainer = document.getElementById('processingQueue');
+      }
+
+      setupEventListeners() {
+        // Botão de abrir modal
+        document.getElementById('btnCertidao').addEventListener('click', () => {
+          this.openModal();
+        });
+
+        // Fechar modal
+        document.getElementById('modalClose').addEventListener('click', () => {
+          this.closeModal();
+        });
+
+        // Clique fora do modal
+        this.modal.addEventListener('click', (e) => {
+          if (e.target === this.modal) {
+            this.closeModal();
+          }
+        });
+
+        // Dropzone eventos
+        this.dropzone.addEventListener('click', () => {
+          this.fileInput.click();
+        });
+
+        this.dropzone.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          this.dropzone.classList.add('dragover');
+        });
+
+        this.dropzone.addEventListener('dragleave', () => {
+          this.dropzone.classList.remove('dragover');
+        });
+
+        this.dropzone.addEventListener('drop', (e) => {
+          e.preventDefault();
+          this.dropzone.classList.remove('dragover');
+          this.handleFiles(e.dataTransfer.files);
+        });
+
+        // Input de arquivo
+        this.fileInput.addEventListener('change', (e) => {
+          this.handleFiles(e.target.files);
+        });
+
+        // Logout
+        document.getElementById('btnLogout').addEventListener('click', (e) => {
+          e.preventDefault();
+          this.handleLogout();
+        });
+      }
+
+      // =====================================
+      // GESTÃO DE MODAL
+      // =====================================
+      openModal() {
+        this.modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+        this.resetModal();
+      }
+
+      closeModal() {
+        if (this.isProcessing) {
+          Swal.fire({
+            title: 'Processamento em andamento',
+            text: 'Aguarde o processamento dos arquivos terminar.',
+            icon: 'warning',
+            confirmButtonText: 'OK'
+          });
+          return;
         }
+
+        this.modal.style.display = 'none';
+        document.body.style.overflow = 'auto';
+        this.resetModal();
+      }
+
+      resetModal() {
+        this.processingQueue = [];
+        this.processedCount = 0;
+        this.queueContainer.style.display = 'none';
+        this.queueContainer.innerHTML = `
+          <h4 style="margin-bottom: 15px; color: #2d3748;">
+            <i class="fa-solid fa-list"></i>
+            Fila de Processamento
+          </h4>
+        `;
+        this.fileInput.value = '';
+      }
+
+      // =====================================
+      // PROCESSAMENTO DE ARQUIVOS
+      // =====================================
+      async handleFiles(fileList) {
+        const files = Array.from(fileList).filter(file => file.type === 'application/pdf');
+
+        if (files.length === 0) {
+          Swal.fire({
+            title: 'Nenhum PDF válido',
+            text: 'Por favor, selecione apenas arquivos PDF.',
+            icon: 'warning',
+            confirmButtonText: 'OK'
+          });
+          return;
+        }
+
+        // Adicionar arquivos à fila
+        files.forEach(file => {
+          const queueItem = {
+            id: this.generateId(),
+            file: file,
+            status: 'waiting',
+            progress: 0,
+            extractedData: null,
+            error: null
+          };
+          this.processingQueue.push(queueItem);
+        });
+
+        this.displayQueue();
+        this.startProcessing();
+      }
+
+      displayQueue() {
+        this.queueContainer.style.display = 'block';
+
+        this.processingQueue.forEach(item => {
+          if (!document.getElementById(`queue-${item.id}`)) {
+            const queueItemEl = this.createQueueItemElement(item);
+            this.queueContainer.appendChild(queueItemEl);
+          }
+        });
+      }
+
+      createQueueItemElement(item) {
+        const div = document.createElement('div');
+        div.className = 'queue-item';
+        div.id = `queue-${item.id}`;
+
+        div.innerHTML = `
+          <div class="file-info">
+            <div class="file-name">${item.file.name}</div>
+            <div class="file-size">${this.formatFileSize(item.file.size)}</div>
+          </div>
+          <div class="progress-container">
+            <div class="progress-bar">
+              <div class="progress-fill" style="width: ${item.progress}%"></div>
+            </div>
+            <div class="progress-text">${item.progress}%</div>
+          </div>
+          <div class="status-icon waiting">
+            <i class="fa-solid fa-clock"></i>
+          </div>
+        `;
+
+        return div;
+      }
+
+      async startProcessing() {
+        if (this.isProcessing) return;
+
+        this.isProcessing = true;
+
+        for (let i = 0; i < this.processingQueue.length; i++) {
+          const item = this.processingQueue[i];
+          if (item.status === 'waiting') {
+            await this.processFile(item);
+          }
+        }
+
+        this.isProcessing = false;
+        this.showProcessingResults();
+      }
+
+      async processFile(item) {
+        try {
+          this.updateQueueItem(item.id, { status: 'processing', progress: 10 });
+
+          // Simular progresso de leitura
+          await this.simulateProgress(item.id, 10, 40, 1000);
+
+          // Extrair texto do PDF
+          const pdfText = await this.extractPDFText(item.file);
+
+          await this.simulateProgress(item.id, 40, 70, 800);
+
+          // Extrair dados específicos
+          const extractedData = this.extractCertificateData(pdfText);
+
+          await this.simulateProgress(item.id, 70, 90, 500);
+
+          // Validar dados extraídos
+          if (!extractedData.placa || !extractedData.numeroDocumento) {
+            throw new Error('Dados essenciais não encontrados no PDF');
+          }
+
+          // Salvar no Firebase
+          const saveResult = await this.saveCertificateToFirebase(extractedData);
+
+          if (!saveResult.success) {
+            throw new Error(saveResult.error);
+          }
+
+          item.extractedData = extractedData;
+          item.certificateId = saveResult.id;
+
+          this.updateQueueItem(item.id, {
+            status: 'success',
+            progress: 100,
+            extractedData: extractedData
+          });
+
+          this.processedCount++;
+
+        } catch (error) {
+          console.error('Erro ao processar arquivo:', error);
+          item.error = error.message;
+          this.updateQueueItem(item.id, {
+            status: 'error',
+            progress: 0,
+            error: error.message
+          });
+        }
+      }
+
+      async extractPDFText(file) {
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+        let fullText = '';
+
+        for (let i = 1; i <= pdf.numPages; i++) {
+          const page = await pdf.getPage(i);
+          const textContent = await page.getTextContent();
+          const pageText = textContent.items.map(item => item.str).join(' ');
+          fullText += pageText + '\n';
+        }
+
+        return fullText;
+      }
+
+      extractCertificateData(pdfText) {
+        const data = {
+          numeroDocumento: null,
+          placa: null,
+          chassi: null,
+          renavam: null,
+          marca: null,
+          modelo: null,
+          ano: null,
+          dataEmissao: null,
+          dataValidade: null,
+          constante: null,
+          marcasSelagem: [],
+          instrumento: null,
+          numeroSerie: null,
+          posto: null,
+          cnpjPosto: null,
+          protocolo: null,
+          tipo: 'CRONOTACÓGRAFO'
+        };
+
+        // Extrair Número do Documento (GRU)
+        const gruMatch = pdfText.match(/Número do Documento de Arrecadação \(GRU\)\s*(\d+)/i);
+        if (gruMatch) {
+          data.numeroDocumento = gruMatch[1].trim();
+        }
+
+        // Extrair Placa
+        const placaMatch = pdfText.match(/Placa\s*([A-Z]{3}\d{4}|[A-Z]{3}\d[A-Z]\d{2})/i);
+        if (placaMatch) {
+          data.placa = placaMatch[1].toUpperCase().trim();
+        }
+
+        // Extrair CHASSI
+        const chassiMatch = pdfText.match(/CHASSI\s*([A-Z0-9]{17})/i);
+        if (chassiMatch) {
+          data.chassi = chassiMatch[1].trim();
+        }
+
+        // Extrair RENAVAM
+        const renavamMatch = pdfText.match(/RENAVAM\s*(\d+)/i);
+        if (renavamMatch) {
+          data.renavam = renavamMatch[1].trim();
+        }
+
+        // Extrair Marca
+        const marcaMatch = pdfText.match(/Marca\s*([A-Z\s]+)/i);
+        if (marcaMatch) {
+          data.marca = marcaMatch[1].trim();
+        }
+
+        // Extrair Modelo do Veículo
+        const modeloVeiculoMatch = pdfText.match(/Veículo\s*([^,\n]+)/i);
+        if (modeloVeiculoMatch) {
+          data.modelo = modeloVeiculoMatch[1].trim();
+        }
+
+        // Extrair Ano
+        const anoMatch = pdfText.match(/Ano\s*(\d{4})/i);
+        if (anoMatch) {
+          data.ano = parseInt(anoMatch[1]);
+        }
+
+        // Extrair Data de Emissão e Validade
+        const dataEmissaoMatch = pdfText.match(/Emitido em (\d{2}\/\d{2}\/\d{4})/i);
+        if (dataEmissaoMatch) {
+          data.dataEmissao = this.parseDate(dataEmissaoMatch[1]);
+        }
+
+        const dataValidadeMatch = pdfText.match(/com validade até (\d{2}\/\d{2}\/\d{4})/i);
+        if (dataValidadeMatch) {
+          data.dataValidade = this.parseDate(dataValidadeMatch[1]);
+        }
+
+        // Extrair Constante K
+        const constanteMatch = pdfText.match(/Constante K:\s*(\d+)/i);
+        if (constanteMatch) {
+          data.constante = constanteMatch[1].trim();
+        }
+
+        // Extrair Marcas de Selagem
+        const selagemMatch = pdfText.match(/Marcas de Selagem:\s*([^\n]+)/i);
+        if (selagemMatch) {
+          const marcas = selagemMatch[1].split(/\s+/).filter(marca => marca.length > 5);
+          data.marcasSelagem = marcas;
+        }
+
+        // Extrair Instrumento
+        const instrumentoMatch = pdfText.match(/Instrumento\s*([^\n]+)/i);
+        if (instrumentoMatch) {
+          data.instrumento = instrumentoMatch[1].trim();
+        }
+
+        // Extrair Número de Série
+        const serieMatch = pdfText.match(/Número de Série\s*(\d+)/i);
+        if (serieMatch) {
+          data.numeroSerie = serieMatch[1].trim();
+        }
+
+        // Extrair Posto
+        const postoMatch = pdfText.match(/NOME\/RAZÃO SOCIAL DO POSTO\s*([^\n]+)/i);
+        if (postoMatch) {
+          data.posto = postoMatch[1].trim();
+        }
+
+        // Extrair CNPJ do Posto
+        const cnpjPostoMatch = pdfText.match(/CNPJ DO POSTO\s*(\d+)/i);
+        if (cnpjPostoMatch) {
+          data.cnpjPosto = cnpjPostoMatch[1].trim();
+        }
+
+        // Extrair Protocolo
+        const protocoloMatch = pdfText.match(/Número do Protocolo\s*(\d+)/i);
+        if (protocoloMatch) {
+          data.protocolo = protocoloMatch[1].trim();
+        }
+
+        return data;
+      }
+
+      parseDate(dateString) {
+        const [day, month, year] = dateString.split('/');
+        return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+      }
+
+      async saveCertificateToFirebase(data) {
+        try {
+          // Simulação de salvamento no Firebase
+          // Aqui você integraria com a função cadastrarCetidao do config.js
+
+          const certificateData = {
+            ...data,
+            dataCadastro: new Date(),
+            dataProcessamento: new Date(),
+            status: this.getCertificateStatus(data.dataValidade),
+            originalText: null // Não salvar o texto completo para economizar espaço
+          };
+
+          // Simular delay de salvamento
+          await new Promise(resolve => setTimeout(resolve, 500));
+
+          console.log('Dados do certificado a serem salvos:', certificateData);
+
+          // Aqui você chamaria: await cadastrarCetidao(certificateData);
+          // Por enquanto, retornamos sucesso simulado
+
+          return {
+            success: true,
+            id: this.generateId(),
+            data: certificateData
+          };
+
+        } catch (error) {
+          console.error('Erro ao salvar certificado:', error);
+          return { success: false, error: error.message };
+        }
+      }
+
+      getCertificateStatus(dataValidade) {
+        if (!dataValidade) return 'unknown';
+
+        const hoje = new Date();
+        const vencimento = new Date(dataValidade);
+        const diasParaVencimento = Math.ceil((vencimento - hoje) / (1000 * 60 * 60 * 24));
+
+        if (diasParaVencimento < 0) return 'expired';
+        if (diasParaVencimento <= 30) return 'expiring';
+        return 'valid';
+      }
+
+      async simulateProgress(itemId, startProgress, endProgress, duration) {
+        const steps = 10;
+        const stepSize = (endProgress - startProgress) / steps;
+        const stepDuration = duration / steps;
+
+        for (let i = 1; i <= steps; i++) {
+          const currentProgress = startProgress + (stepSize * i);
+          this.updateQueueItem(itemId, { progress: Math.round(currentProgress) });
+          await new Promise(resolve => setTimeout(resolve, stepDuration));
+        }
+      }
+
+      updateQueueItem(itemId, updates) {
+        const item = this.processingQueue.find(item => item.id === itemId);
+        if (!item) return;
+
+        Object.assign(item, updates);
+
+        const queueElement = document.getElementById(`queue-${itemId}`);
+        if (!queueElement) return;
+
+        // Atualizar classe do elemento
+        queueElement.className = `queue-item ${item.status}`;
+
+        // Atualizar progresso
+        const progressFill = queueElement.querySelector('.progress-fill');
+        const progressText = queueElement.querySelector('.progress-text');
+        if (progressFill && progressText) {
+          progressFill.style.width = `${item.progress}%`;
+          progressText.textContent = `${item.progress}%`;
+        }
+
+        // Atualizar ícone de status
+        const statusIcon = queueElement.querySelector('.status-icon');
+        if (statusIcon) {
+          statusIcon.className = `status-icon ${item.status}`;
+
+          let iconClass = '';
+          switch (item.status) {
+            case 'waiting':
+              iconClass = 'fa-clock';
+              break;
+            case 'processing':
+              iconClass = 'fa-spinner';
+              break;
+            case 'success':
+              iconClass = 'fa-check-circle';
+              break;
+            case 'error':
+              iconClass = 'fa-exclamation-circle';
+              break;
+          }
+
+          statusIcon.innerHTML = `<i class="fa-solid ${iconClass}"></i>`;
+        }
+
+        // Adicionar dados extraídos para itens com sucesso
+        if (item.status === 'success' && item.extractedData) {
+          this.addExtractedDataToQueueItem(queueElement, item.extractedData);
+        }
+
+        // Adicionar erro para itens com erro
+        if (item.status === 'error' && item.error) {
+          this.addErrorToQueueItem(queueElement, item.error);
+        }
+      }
+
+      addExtractedDataToQueueItem(queueElement, data) {
+        let extractedDataEl = queueElement.querySelector('.extracted-data');
+        if (extractedDataEl) return;
+
+        extractedDataEl = document.createElement('div');
+        extractedDataEl.className = 'extracted-data';
+        extractedDataEl.innerHTML = `
+          <div class="data-item">
+            <span class="data-label">Placa:</span>
+            <span class="data-value">${data.placa || 'N/A'}</span>
+          </div>
+          <div class="data-item">
+            <span class="data-label">Documento:</span>
+            <span class="data-value">${data.numeroDocumento || 'N/A'}</span>
+          </div>
+          <div class="data-item">
+            <span class="data-label">Validade:</span>
+            <span class="data-value">${data.dataValidade ? this.formatDate(data.dataValidade) : 'N/A'}</span>
+          </div>
+          <div class="data-item">
+            <span class="data-label">Status:</span>
+            <span class="data-value status-badge ${data.status || 'unknown'}">${this.getStatusLabel(data.status)}</span>
+          </div>
+        `;
+
+        queueElement.appendChild(extractedDataEl);
+      }
+
+      addErrorToQueueItem(queueElement, error) {
+        let errorEl = queueElement.querySelector('.error-message');
+        if (errorEl) return;
+
+        errorEl = document.createElement('div');
+        errorEl.className = 'error-message';
+        errorEl.innerHTML = `
+          <div style="color: #dc3545; font-size: 12px; margin-top: 5px;">
+            <i class="fa-solid fa-exclamation-triangle"></i>
+            ${error}
+          </div>
+        `;
+
+        queueElement.appendChild(errorEl);
+      }
+
+      showProcessingResults() {
+        const successCount = this.processingQueue.filter(item => item.status === 'success').length;
+        const errorCount = this.processingQueue.filter(item => item.status === 'error').length;
+
+        let title, text, icon;
+
+        if (errorCount === 0) {
+          title = 'Processamento Concluído!';
+          text = `${successCount} certificado(s) processado(s) com sucesso.`;
+          icon = 'success';
+        } else if (successCount === 0) {
+          title = 'Erro no Processamento';
+          text = `${errorCount} arquivo(s) não puderam ser processados.`;
+          icon = 'error';
+        } else {
+          title = 'Processamento Parcial';
+          text = `${successCount} sucesso(s) e ${errorCount} erro(s).`;
+          icon = 'warning';
+        }
+
+        Swal.fire({
+          title,
+          text,
+          icon,
+          confirmButtonText: 'OK',
+          showCancelButton: successCount > 0,
+          cancelButtonText: 'Fechar',
+          confirmButtonColor: '#007bff'
+        }).then((result) => {
+          if (result.isConfirmed && successCount > 0) {
+            this.loadStats();
+            this.loadRecentCertificates();
+          }
+        });
+      }
+
+      // =====================================
+      // ESTATÍSTICAS E DADOS
+      // =====================================
+      async loadStats() {
+        try {
+          // Simulação de carregamento de estatísticas
+          // Aqui você integraria com obterEstatisticasRapidas do config.js
+
+          const mockStats = {
+            totalVeiculos: 45,
+            totalProprietarios: 32,
+            totalCertificados: 78,
+            vencendo30dias: 5
+          };
+
+          this.stats = mockStats;
+          this.updateStatsDisplay();
+
+        } catch (error) {
+          console.error('Erro ao carregar estatísticas:', error);
+        }
+      }
+
+      updateStatsDisplay() {
+        document.getElementById('totalVeiculos').textContent = this.stats.totalVeiculos;
+        document.getElementById('totalProprietarios').textContent = this.stats.totalProprietarios;
+        document.getElementById('totalCertificados').textContent = this.stats.totalCertificados;
+        document.getElementById('vencendo30dias').textContent = this.stats.vencendo30dias;
+      }
+
+      async loadRecentCertificates() {
+        try {
+          // Simulação de certificados recentes
+          const mockCertificates = [
+            {
+              id: '1',
+              placa: 'ABC1234',
+              numeroDocumento: '294104125002470064',
+              dataValidade: new Date('2025-12-15'),
+              status: 'valid'
+            },
+            {
+              id: '2',
+              placa: 'XYZ9876',
+              numeroDocumento: '294104125002470065',
+              dataValidade: new Date('2025-09-10'),
+              status: 'expiring'
+            },
+            {
+              id: '3',
+              placa: 'DEF5678',
+              numeroDocumento: '294104125002470066',
+              dataValidade: new Date('2025-07-20'),
+              status: 'expired'
+            }
+          ];
+
+          this.displayRecentCertificates(mockCertificates);
+
+        } catch (error) {
+          console.error('Erro ao carregar certificados recentes:', error);
+        }
+      }
+
+      displayRecentCertificates(certificates) {
+        const certificatesList = document.getElementById('certificatesList');
+
+        if (certificates.length === 0) {
+          certificatesList.innerHTML = `
+            <div class="alert alert-info">
+              <i class="fa-solid fa-info-circle"></i>
+              Nenhum certificado encontrado. Clique em "Certidão" para processar seu primeiro PDF.
+            </div>
+          `;
+          return;
+        }
+
+        certificatesList.innerHTML = certificates.map(cert => `
+          <div class="certificate-item">
+            <div class="certificate-info">
+              <h4><i class="fa-solid fa-car"></i> ${cert.placa}</h4>
+              <p><strong>Documento:</strong> ${cert.numeroDocumento}</p>
+              <p><strong>Validade:</strong> ${this.formatDate(cert.dataValidade)}</p>
+            </div>
+            <div class="certificate-status">
+              <span class="status-badge ${cert.status}">
+                ${this.getStatusLabel(cert.status)}
+              </span>
+              <button class="btn-action" onclick="certificateManager.viewCertificate('${cert.id}')">
+                <i class="fa-solid fa-eye"></i>
+              </button>
+            </div>
+          </div>
+        `).join('');
+      }
+
+      viewCertificate(certificateId) {
+        // Implementar visualização detalhada do certificado
+        Swal.fire({
+          title: 'Visualizar Certificado',
+          text: `Funcionalidade de visualização do certificado ${certificateId} será implementada.`,
+          icon: 'info',
+          confirmButtonText: 'OK'
+        });
+      }
+
+      // =====================================
+      // UTILITÁRIOS
+      // =====================================
+      generateId() {
+        return Math.random().toString(36).substr(2, 9);
+      }
+
+      formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+      }
+
+      formatDate(date) {
+        if (!date) return 'N/A';
+        return new Date(date).toLocaleDateString('pt-BR');
+      }
+
+      getStatusLabel(status) {
+        const labels = {
+          'valid': 'Válido',
+          'expiring': 'Vencendo',
+          'expired': 'Vencido',
+          'unknown': 'Desconhecido'
+        };
+        return labels[status] || 'N/A';
+      }
+
+      handleLogout() {
+        Swal.fire({
+          title: 'Sair do Sistema',
+          text: 'Tem certeza que deseja sair?',
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonColor: '#d33',
+          cancelButtonColor: '#3085d6',
+          confirmButtonText: 'Sim, sair',
+          cancelButtonText: 'Cancelar'
+        }).then((result) => {
+          if (result.isConfirmed) {
+            // Aqui você chamaria logoutUser() do config.js
+            console.log('Logout realizado');
+            // window.location.href = 'login.html';
+          }
+        });
+      }
+    }
+
+    // =====================================
+    // INICIALIZAÇÃO GLOBAL
+    // =====================================
+    let certificateManager;
+
+    document.addEventListener('DOMContentLoaded', function () {
+      certificateManager = new CertificateManager();
+
+      // Verificar autenticação (integrar com Firebase Auth)
+      // const user = await getCurrentUser();
+      // if (!user) {
+      //   window.location.href = 'login.html';
+      //   return;
+      // }
+
+      console.log('Sistema de Certificados inicializado com sucesso!');
+    });
+
+    // =====================================
+    // NAVEGAÇÃO DO MENU (MANTIDA DO ORIGINAL)
+    // =====================================
+    document.addEventListener('DOMContentLoaded', function () {
+      const menuLinks = document.querySelectorAll('.category-header[data-page]');
+
+      menuLinks.forEach(link => {
+        link.addEventListener('click', function (e) {
+          e.preventDefault();
+          loadPage(this.getAttribute('data-page'));
+        });
       });
     });
-  }
-});
 
-// Carregamento dinâmico
-function loadPage(pageName) {
-  const mainContent = document.getElementById('main-content');
-  mainContent.innerHTML = '<div class="loading"></div>';
-  setTimeout(() => {
-    fetch(pageName)
-      .then(response => {
-        if (!response.ok) throw new Error('Página não encontrada');
-        return response.text();
-      })
-      .then(html => {
-        mainContent.innerHTML = html;
-        const scripts = mainContent.querySelectorAll('script');
-        scripts.forEach(script => {
-          const newScript = document.createElement('script');
-          newScript.textContent = script.textContent;
-          document.head.appendChild(newScript);
-          document.head.removeChild(newScript);
-        });
-      })
-      .catch(error => {
+    function loadPage(pageName) {
+      const mainContent = document.getElementById('main-content');
+
+      if (pageName === 'dashboard') {
+        // Recarregar dashboard
+        location.reload();
+        return;
+      }
+
+      mainContent.innerHTML = '<div class="loading"></div>';
+
+      setTimeout(() => {
+        // Aqui você implementaria o carregamento das outras páginas
+        // Por enquanto, mostramos uma mensagem
         mainContent.innerHTML = `
+          <div class="alert alert-info">
+            <i class="fa-solid fa-info-circle"></i>
+            <strong>Página "${pageName}" em desenvolvimento</strong>
+            <br>
+            <small>Esta funcionalidade será implementada em breve.</small>
+          </div>
+        `;
+      }, 500);
+    }
+    // Substitua toda a função loadPage() por esta versão simples:
+
+    // Carregamento dinâmico
+    function loadPage(pageName) {
+      const mainContent = document.getElementById('main-content');
+      mainContent.innerHTML = '<div class="loading"></div>';
+      setTimeout(() => {
+        fetch(pageName)
+          .then(response => {
+            if (!response.ok) throw new Error('Página não encontrada');
+            return response.text();
+          })
+          .then(html => {
+            mainContent.innerHTML = html;
+            const scripts = mainContent.querySelectorAll('script');
+            scripts.forEach(script => {
+              const newScript = document.createElement('script');
+              newScript.textContent = script.textContent;
+              document.head.appendChild(newScript);
+              document.head.removeChild(newScript);
+            });
+          })
+          .catch(error => {
+            mainContent.innerHTML = `
           <div class="alert alert-danger">
             <i class="fa-solid fa-exclamation-triangle"></i>
             <strong>Erro ao carregar página:</strong> ${pageName}
@@ -134,11 +1001,12 @@ function loadPage(pageName) {
             <small>Verifique se o arquivo existe e tente novamente.</small>
           </div>
         `;
-      });
-  }, 500);
-}
+          });
+      }, 500);
+    }
 
-</script>
+  </script>
 
 </body>
+
 </html>
