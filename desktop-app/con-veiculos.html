@@ -1,0 +1,1026 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Consulta de Veículos</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #edeffa 0%, #ffffff 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #ffffff 0%, #ffffffa5 100%);
+            color: rgb(0, 0, 0);
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            padding: 30px;
+            background: #f4f4f4;
+            border-radius: 15px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            border-left: 4px solid #8a8a8a;
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #000306;
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .controls {
+            padding: 30px;
+            background: white;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .search-input {
+            flex: 1;
+            min-width: 300px;
+            padding: 15px 20px;
+            border: 2px solid #e1e5e9;
+            border-radius: 25px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #4facfe;
+            box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.1);
+        }
+
+        .refresh-btn {
+            padding: 12px 25px;
+            background: #4facfe;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .refresh-btn:hover:not(:disabled) {
+            background: #369fff;
+            transform: translateY(-2px);
+        }
+
+        .refresh-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .cache-indicator {
+            padding: 8px 15px;
+            background: #e8f5e8;
+            color: #2d6e2d;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .cache-indicator.cache {
+            background: #e8f5e8;
+            color: #2d6e2d;
+        }
+
+        .cache-indicator.firebase {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .table-container {
+            padding: 0 30px 30px;
+            overflow-x: auto;
+        }
+
+        .vehicles-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+        }
+
+        .vehicles-table th {
+            background: linear-gradient(135deg, #000000 0%, #000000 100%);
+            color: white;
+            padding: 20px 15px;
+            text-align: left;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 0.9rem;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .vehicles-table td {
+            padding: 18px 15px;
+            border-bottom: 1px solid #ffffff;
+            color: #333;
+            font-size: 0.95rem;
+        }
+
+        .vehicles-table tr:hover {
+            background: #ccf3d1;
+            transform: scale(1.001);
+            transition: all 0.2s ease;
+        }
+
+        .vehicles-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .placa {
+            font-weight: bold;
+            color: #4facfe;
+            font-size: 1.1rem;
+        }
+
+        .documento {
+            font-family: 'Courier New', monospace;
+            background: #f0f4ff;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+
+        /* SKELETON LOADING */
+        .skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+        }
+
+        @keyframes loading {
+            0% {
+                background-position: 200% 0;
+            }
+
+            100% {
+                background-position: -200% 0;
+            }
+        }
+
+        .skeleton-row {
+            height: 60px;
+        }
+
+        .skeleton-cell {
+            height: 20px;
+            margin: 5px 0;
+            border-radius: 4px;
+        }
+
+        .loading {
+            padding: 40px;
+            text-align: center;
+        }
+
+        .loading-content {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .loading-progress {
+            background: #f0f0f0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+
+        .loading-bar {
+            height: 8px;
+            background: linear-gradient(90deg, #4facfe, #00f2fe);
+            border-radius: 10px;
+            transition: width 0.3s ease;
+        }
+
+        .loading-text {
+            color: #666;
+            margin: 10px 0;
+            font-size: 14px;
+        }
+
+        .error {
+            text-align: center;
+            padding: 60px;
+            color: #dc3545;
+        }
+
+        .empty {
+            text-align: center;
+            padding: 60px;
+            color: #666;
+        }
+
+        .empty-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-vinculado {
+            background: #28a745;
+        }
+
+        .status-nao-vinculado {
+            background: #ffc107;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            padding: 30px;
+            background: #f8f9fa;
+            border-radius: 0 0 15px 15px;
+        }
+
+        .pagination-btn {
+            padding: 10px 20px;
+            background: #4facfe;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .pagination-btn:hover:not(:disabled) {
+            background: #369fff;
+            transform: translateY(-2px);
+        }
+
+        .pagination-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .pagination-info {
+            color: #666;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .performance-info {
+            padding: 15px 30px;
+            background: #f8f9fa;
+            border-top: 1px solid #eee;
+            color: #666;
+            font-size: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .stats {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 15px;
+                padding: 20px;
+            }
+
+            .controls {
+                padding: 20px;
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .search-input {
+                min-width: auto;
+            }
+
+            .table-container {
+                padding: 0 15px 20px;
+            }
+
+            .vehicles-table th,
+            .vehicles-table td {
+                padding: 12px 8px;
+                font-size: 0.85rem;
+            }
+
+            .pagination {
+                padding: 20px;
+                flex-wrap: wrap;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Veículos Cadastrados</h1>
+            <p>Consulta e gerenciamento de veículos cadastrados e Proprietários</p>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number" id="total-veiculos">0</div>
+                <div class="stat-label">Total de Veículos</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="total-proprietarios">0</div>
+                <div class="stat-label">Proprietários</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="veiculos-vinculados">0</div>
+                <div class="stat-label">Vinculados</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="veiculos-sem-proprietario">0</div>
+                <div class="stat-label">Proprietário (Não informado)</div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <input type="text" class="search-input" id="search-input"
+                placeholder="🔍 Buscar por placa, marca, município, proprietário...">
+
+            <button class="refresh-btn" id="refresh-btn">
+                🔄 Atualizar
+            </button>
+
+            <div class="cache-indicator" id="cache-indicator">
+                ⚡ Cache
+            </div>
+        </div>
+
+        <div class="table-container">
+            <div id="loading" class="loading">
+                <div class="loading-content">
+                   <!--<div class="loading-progress">
+                        <div class="loading-bar" id="loading-bar" style="width: 0%;"></div>
+                    </div>
+                    <div class="loading-text" id="loading-text">Inicializando...</div>--> 
+                </div>
+            </div>
+
+            <div id="error" class="error" style="display: none;">
+                <p>❌ Erro ao carregar os dados. Verifique sua conexão.</p>
+                <button class="refresh-btn" onclick="carregarDados(true)" style="margin-top: 20px;">
+                    Tentar Novamente
+                </button>
+            </div>
+
+            <div id="empty" class="empty" style="display: none;">
+                <div class="empty-icon">🚗</div>
+                <p>Nenhum veículo encontrado</p>
+            </div>
+
+            <table class="vehicles-table" id="vehicles-table" style="display: none;">
+                <thead>
+                    <tr>
+                        <th>Status</th>
+                        <th>Placa</th>
+                        <th>Renavan</th>
+                        <th>Município</th>
+                        <th>Ano</th>
+                        <th>Marca</th>
+                        <th>CPF/CNPJ</th>
+                        <th>Nome Proprietário</th>
+                    </tr>
+                </thead>
+                <tbody id="vehicles-tbody">
+                </tbody>
+            </table>
+
+            <div class="pagination" id="pagination" style="display: none;">
+                <button class="pagination-btn" id="prev-btn" onclick="carregarPaginaAnterior()">
+                    ← Anterior
+                </button>
+
+                <div class="pagination-info" id="pagination-info">
+                    Página 1
+                </div>
+
+                <button class="pagination-btn" id="next-btn" onclick="carregarProximaPagina()">
+                    Próxima →
+                </button>
+            </div>
+        </div>
+
+        <div class="performance-info" id="performance-info">
+            <div>Tempo de carregamento: <span id="load-time">-</span></div>
+            <div>Fonte: <span id="data-source">-</span></div>
+            <div>Registros: <span id="record-count">0</span></div>
+        </div>
+    </div>
+
+    <script>
+        // 🚀 SCRIPT CORRIGIDO - Consulta de Veículos
+        // Substitua todo o <script> do seu arquivo con-veiculos.html por este código
+
+        // 🚀 VARIÁVEIS GLOBAIS OTIMIZADAS
+        let todosVeiculos = [];
+        let veiculosFiltrados = [];
+        let paginaAtual = 1;
+        let itensPorPagina = 50;
+        let ultimoDoc = null;
+        let temMaisRegistros = true;
+        let cache = new Map();
+        let ultimaBusca = '';
+        let debounceTimer = null;
+        let loadStartTime = 0;
+        let isInitialized = false;
+
+        // 🎯 ELEMENTOS DOM - INICIALIZAÇÃO SEGURA
+        let elements = {};
+
+        // 🔧 FUNÇÃO PARA INICIALIZAR ELEMENTOS DOM
+        function initializeElements() {
+            elements = {
+                loading: document.getElementById('loading'),
+                error: document.getElementById('error'),
+                empty: document.getElementById('empty'),
+                table: document.getElementById('vehicles-table'),
+                tbody: document.getElementById('vehicles-tbody'),
+                searchInput: document.getElementById('search-input'),
+                refreshBtn: document.getElementById('refresh-btn'),
+                cacheIndicator: document.getElementById('cache-indicator'),
+                pagination: document.getElementById('pagination'),
+                prevBtn: document.getElementById('prev-btn'),
+                nextBtn: document.getElementById('next-btn'),
+                paginationInfo: document.getElementById('pagination-info'),
+                loadingBar: document.getElementById('loading-bar'),
+                loadingText: document.getElementById('loading-text'),
+                performanceInfo: document.getElementById('performance-info'),
+                loadTime: document.getElementById('load-time'),
+                dataSource: document.getElementById('data-source'),
+                recordCount: document.getElementById('record-count'),
+
+                // Estatísticas
+                totalVeiculos: document.getElementById('total-veiculos'),
+                totalProprietarios: document.getElementById('total-proprietarios'),
+                veiculosVinculados: document.getElementById('veiculos-vinculados'),
+                veiculosSemProprietario: document.getElementById('veiculos-sem-proprietario')
+            };
+        }
+
+        // 🎨 FUNÇÕES DE UI
+        function showLoading(message = 'Carregando...') {
+            if (!elements.loading) return;
+            loadStartTime = performance.now();
+            elements.loading.style.display = 'block';
+            elements.error && (elements.error.style.display = 'none');
+            elements.empty && (elements.empty.style.display = 'none');
+            elements.table && (elements.table.style.display = 'none');
+            elements.pagination && (elements.pagination.style.display = 'none');
+            elements.loadingText && (elements.loadingText.textContent = message);
+            elements.loadingBar && (elements.loadingBar.style.width = '10%');
+        }
+
+        function updateLoadingProgress(percent, message) {
+            if (elements.loadingBar) {
+                elements.loadingBar.style.width = percent + '%';
+            }
+            if (message && elements.loadingText) {
+                elements.loadingText.textContent = message;
+            }
+        }
+
+        function showError() {
+            if (!elements.error) return;
+            elements.loading && (elements.loading.style.display = 'none');
+            elements.error.style.display = 'block';
+            elements.empty && (elements.empty.style.display = 'none');
+            elements.table && (elements.table.style.display = 'none');
+            elements.pagination && (elements.pagination.style.display = 'none');
+        }
+
+        function showEmpty() {
+            if (!elements.empty) return;
+            elements.loading && (elements.loading.style.display = 'none');
+            elements.error && (elements.error.style.display = 'none');
+            elements.empty.style.display = 'block';
+            elements.table && (elements.table.style.display = 'none');
+            elements.pagination && (elements.pagination.style.display = 'none');
+        }
+
+        function showTable() {
+            if (!elements.table) return;
+            elements.loading && (elements.loading.style.display = 'none');
+            elements.error && (elements.error.style.display = 'none');
+            elements.empty && (elements.empty.style.display = 'none');
+            elements.table.style.display = 'table';
+        }
+
+        function updateCacheIndicator(source) {
+            if (!elements.cacheIndicator) return;
+            const isCache = source === 'cache';
+            elements.cacheIndicator.className = `cache-indicator ${isCache ? 'cache' : 'firebase'}`;
+            elements.cacheIndicator.innerHTML = isCache ? '⚡ Cache' : '☁️ Firebase';
+        }
+
+        function updatePerformanceInfo(loadTime, source, count) {
+            elements.loadTime && (elements.loadTime.textContent = loadTime + 'ms');
+            elements.dataSource && (elements.dataSource.textContent = source);
+            elements.recordCount && (elements.recordCount.textContent = count);
+        }
+
+        // 📊 FUNÇÃO DE ESTATÍSTICAS OTIMIZADA
+        function atualizarEstatisticas() {
+            const totalVeiculos = todosVeiculos.length;
+            const proprietariosUnicos = new Set(
+                todosVeiculos
+                    .filter(v => v.proprietarioDocumento && v.proprietarioDocumento !== "NÃO INFORMADO")
+                    .map(v => v.proprietarioDocumento)
+            ).size;
+            const veiculosVinculados = todosVeiculos.filter(v => v.temProprietario).length;
+            const veiculosSemProprietario = totalVeiculos - veiculosVinculados;
+
+            // Animação suave dos números
+            animateNumber(elements.totalVeiculos, totalVeiculos);
+            animateNumber(elements.totalProprietarios, proprietariosUnicos);
+            animateNumber(elements.veiculosVinculados, veiculosVinculados);
+            animateNumber(elements.veiculosSemProprietario, veiculosSemProprietario);
+        }
+
+        function animateNumber(element, targetValue) {
+            if (!element) return;
+            const currentValue = parseInt(element.textContent) || 0;
+            const increment = Math.ceil((targetValue - currentValue) / 10);
+
+            if (currentValue < targetValue) {
+                element.textContent = Math.min(currentValue + increment, targetValue);
+                setTimeout(() => animateNumber(element, targetValue), 50);
+            }
+        }
+
+        // 🔧 FUNÇÃO DE FORMATAÇÃO
+        function formatarDocumento(documento, tipo) {
+            if (!documento || documento === "NÃO INFORMADO") return "Não informado";
+            return documento;
+        }
+
+        // 🚀 RENDERIZAÇÃO OTIMIZADA COM FRAGMENTOS DOM
+        function renderizarTabela(veiculos = veiculosFiltrados) {
+            if (veiculos.length === 0) {
+                showEmpty();
+                return;
+            }
+
+            showTable();
+
+            if (!elements.tbody) return;
+
+            // Usar DocumentFragment para performance
+            const fragment = document.createDocumentFragment();
+
+            veiculos.forEach(veiculo => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+            <td>
+                <span class="status-indicator ${veiculo.temProprietario ? 'status-vinculado' : 'status-nao-vinculado'}"></span>
+                ${veiculo.temProprietario ? 'Vinculado' : 'Sem proprietário'}
+            </td>
+            <td class="placa">${veiculo.placa || 'N/A'}</td>
+            <td>${veiculo.renavan || 'N/A'}</td>
+            <td>${veiculo.municipio || 'N/A'}</td>
+            <td>${veiculo.ano || 'N/A'}</td>
+            <td>${veiculo.marca || 'N/A'}</td>
+            <td class="documento">${formatarDocumento(veiculo.proprietarioDocumento)}</td>
+            <td>${veiculo.proprietarioNome || 'Não informado'}</td>
+        `;
+                fragment.appendChild(row);
+            });
+
+            // Limpar e inserir de uma vez
+            elements.tbody.innerHTML = '';
+            elements.tbody.appendChild(fragment);
+
+            atualizarEstatisticas();
+        }
+
+        // 🔍 BUSCA OTIMIZADA COM DEBOUNCE
+        function filtrarVeiculos(termo) {
+            if (!termo.trim()) {
+                veiculosFiltrados = todosVeiculos;
+                renderizarTabela();
+                return;
+            }
+
+            // Verificar cache de busca
+            const cacheKey = termo.toLowerCase();
+            if (cache.has(cacheKey)) {
+                veiculosFiltrados = cache.get(cacheKey);
+                renderizarTabela();
+                return;
+            }
+
+            const termoLower = termo.toLowerCase();
+            const resultados = todosVeiculos.filter(veiculo => {
+                return (veiculo.placa || '').toLowerCase().includes(termoLower) ||
+                    (veiculo.marca || '').toLowerCase().includes(termoLower) ||
+                    (veiculo.municipio || '').toLowerCase().includes(termoLower) ||
+                    (veiculo.proprietarioNome || '').toLowerCase().includes(termoLower) ||
+                    (veiculo.proprietarioDocumento || '').toLowerCase().includes(termoLower) ||
+                    (veiculo.renavan || '').includes(termo) ||
+                    (veiculo.ano || '').toString().includes(termo);
+            });
+
+            // Armazenar no cache
+            cache.set(cacheKey, resultados);
+            veiculosFiltrados = resultados;
+            renderizarTabela();
+        }
+
+        // 🎯 BUSCA COM DEBOUNCE PARA PERFORMANCE
+        function debouncedSearch(termo) {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                filtrarVeiculos(termo);
+                ultimaBusca = termo;
+            }, 300);
+        }
+
+        // 📄 FUNÇÕES DE PAGINAÇÃO
+        async function carregarProximaPagina() {
+            if (!temMaisRegistros || !elements.nextBtn) return;
+
+            elements.nextBtn.disabled = true;
+            paginaAtual++;
+            await carregarVeiculosPaginado();
+            elements.nextBtn.disabled = false;
+        }
+
+        async function carregarPaginaAnterior() {
+            if (paginaAtual <= 1 || !elements.prevBtn) return;
+
+            elements.prevBtn.disabled = true;
+            paginaAtual--;
+            ultimoDoc = null;
+            await carregarDados(false, false);
+            elements.prevBtn.disabled = false;
+        }
+
+        function atualizarPaginacao() {
+            if (elements.paginationInfo) {
+                elements.paginationInfo.textContent = `Página ${paginaAtual}`;
+            }
+            if (elements.prevBtn) {
+                elements.prevBtn.disabled = paginaAtual <= 1;
+            }
+            if (elements.nextBtn) {
+                elements.nextBtn.disabled = !temMaisRegistros;
+            }
+
+            if (todosVeiculos.length > 0 && elements.pagination) {
+                elements.pagination.style.display = 'flex';
+            }
+        }
+
+        // 🚀 CARREGAMENTO PRINCIPAL OTIMIZADO (VERSÃO CORRIGIDA)
+        async function carregarDados(forceRefresh = false, useCache = true) {
+            try {
+                console.log('🚀 Iniciando carregamento de dados...');
+                showLoading('Inicializando sistema...');
+
+                // Garantir que elementos estão inicializados
+                if (!isInitialized) {
+                    initializeElements();
+                    isInitialized = true;
+                }
+
+                // Importar Firebase
+                updateLoadingProgress(20, 'Conectando ao Firebase...');
+                const firebaseModule = await import('../firebase/config.js');
+
+                const {
+                    listarVeiculosComProprietarios,
+                    getCurrentUser,
+                    obterEstatisticasRapidas,
+                    db
+                } = firebaseModule;
+
+                // Importar funções Firestore separadamente
+                const { collection, query, getDocs, orderBy, limit } = await import('https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js');
+
+                // Verificar autenticação
+                updateLoadingProgress(30, 'Verificando autenticação...');
+                const user = await getCurrentUser();
+                if (!user) {
+                    throw new Error('Usuário não autenticado');
+                }
+
+                // Carregar estatísticas primeiro (é mais rápido)
+                updateLoadingProgress(50, 'Carregando estatísticas...');
+                try {
+                    const statsResult = await obterEstatisticasRapidas();
+                    if (statsResult.success && elements.totalVeiculos) {
+                        const stats = statsResult.stats;
+                        elements.totalVeiculos.textContent = stats.totalVeiculos || 0;
+                        elements.totalProprietarios && (elements.totalProprietarios.textContent = stats.totalProprietarios || 0);
+                        elements.veiculosVinculados && (elements.veiculosVinculados.textContent = 0);
+                        elements.veiculosSemProprietario && (elements.veiculosSemProprietario.textContent = 0);
+                    }
+                } catch (error) {
+                    console.warn('Erro ao carregar estatísticas:', error);
+                }
+
+                // Carregar veículos - SEMPRE TENTAR QUERY SIMPLES PRIMEIRO
+                updateLoadingProgress(70, 'Carregando veículos...');
+
+                let result;
+
+                try {
+                    // USAR QUERY SIMPLES DIRETAMENTE (mais confiável)
+                    updateLoadingProgress(75, 'Executando consulta...');
+
+                    const veiculosRef = collection(db, "users", user.uid, "veiculos");
+                    const veiculosQuery = query(
+                        veiculosRef,
+                        orderBy('__name__'), // Ordenar por ID (sempre tem índice)
+                        limit(itensPorPagina * 3) // Carregar mais para ter dados
+                    );
+
+                    const snapshot = await getDocs(veiculosQuery);
+                    const veiculos = [];
+
+                    snapshot.forEach((doc) => {
+                        const data = doc.data();
+                        // Filtrar placeholders manualmente
+                        if (!data.placeholder) {
+                            veiculos.push({
+                                id: doc.id,
+                                ...data
+                            });
+                        }
+                    });
+
+                    result = {
+                        success: true,
+                        veiculos: veiculos,
+                        source: 'firebase-direto',
+                        count: veiculos.length
+                    };
+
+                } catch (queryError) {
+                    console.warn('Erro na query direta, tentando função otimizada:', queryError.message);
+
+                    // FALLBACK: Usar função otimizada
+                    try {
+                        if (useCache && !forceRefresh) {
+                            result = await listarVeiculosComProprietarios({ useCache: true });
+                        } else {
+                            result = await listarVeiculosComProprietarios({ useCache: false });
+                        }
+                    } catch (fallbackError) {
+                        console.error('Erro em ambas as tentativas:', fallbackError);
+                        throw fallbackError;
+                    }
+                }
+
+                updateLoadingProgress(90, 'Processando dados...');
+
+                if (!result || !result.success) {
+                    throw new Error(result?.error || 'Erro ao carregar dados');
+                }
+
+                todosVeiculos = result.veiculos || [];
+                veiculosFiltrados = todosVeiculos;
+
+                console.log(`📊 ${todosVeiculos.length} veículos carregados`);
+
+                // Atualizar indicadores
+                updateCacheIndicator(result.source || 'firebase');
+
+                updateLoadingProgress(100, 'Finalizando...');
+
+                // Pequeno delay para mostrar a barra completa
+                setTimeout(() => {
+                    // Renderizar dados
+                    renderizarTabela();
+                    atualizarPaginacao();
+
+                    // Atualizar informações de performance
+                    const loadTime = Math.round(performance.now() - loadStartTime);
+                    updatePerformanceInfo(loadTime, result.source || 'firebase', todosVeiculos.length);
+
+                    console.log(`✅ ${todosVeiculos.length} veículos carregados em ${loadTime}ms (${result.source})`);
+                }, 200);
+
+                // Limpar cache de busca se necessário
+                if (forceRefresh) {
+                    cache.clear();
+                }
+
+            } catch (error) {
+                console.error('❌ Erro ao carregar dados:', error);
+                showError();
+
+                // Atualizar informações de performance mesmo com erro
+                const loadTime = Math.round(performance.now() - loadStartTime);
+                updatePerformanceInfo(loadTime, 'erro', 0);
+
+                // Tentar mostrar dados do cache em caso de erro
+                if (todosVeiculos.length > 0) {
+                    setTimeout(() => {
+                        renderizarTabela();
+                        updateCacheIndicator('cache-error');
+                    }, 500);
+                }
+            }
+        }
+
+        // 🎯 INICIALIZAÇÃO INTELIGENTE (VERSÃO CORRIGIDA)
+        function initializeApp() {
+            console.log('🚀 Inicializando aplicação de consulta...');
+
+            // Aguardar um pouco para garantir que o DOM está pronto
+            setTimeout(async () => {
+                try {
+                    initializeElements();
+
+                    // Verificar se os elementos essenciais existem
+                    if (!elements.loading || !elements.table) {
+                        console.warn('⚠️ Elementos DOM não encontrados, tentando novamente...');
+                        setTimeout(initializeApp, 500);
+                        return;
+                    }
+
+                    // Configurar event listeners
+                    setupEventListeners();
+
+                    // Carregar dados iniciais
+                    console.log('📱 Carregando dados iniciais...');
+                    await carregarDados(false, false);
+
+                    // Focar no campo de busca após carregar
+                    setTimeout(() => {
+                        if (elements.searchInput) {
+                            elements.searchInput.focus();
+                        }
+                    }, 300);
+
+                } catch (error) {
+                    console.error('❌ Erro na inicialização:', error);
+                    setTimeout(() => {
+                        showError();
+                    }, 1000);
+                }
+            }, 100);
+        }
+
+        // 🎯 EVENT LISTENERS
+        function setupEventListeners() {
+            // Busca com debounce
+            if (elements.searchInput) {
+                elements.searchInput.addEventListener('input', (e) => {
+                    debouncedSearch(e.target.value);
+                });
+            }
+
+            // Botão refresh
+            if (elements.refreshBtn) {
+                elements.refreshBtn.addEventListener('click', async () => {
+                    elements.refreshBtn.disabled = true;
+                    elements.refreshBtn.innerHTML = '⏳ Atualizando...';
+
+                    await carregarDados(true, false);
+
+                    elements.refreshBtn.disabled = false;
+                    elements.refreshBtn.innerHTML = '🔄 Atualizar';
+                });
+            }
+
+            // Atalhos de teclado
+            document.addEventListener('keydown', (e) => {
+                // Ctrl/Cmd + R = Refresh
+                if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
+                    e.preventDefault();
+                    if (elements.refreshBtn) {
+                        elements.refreshBtn.click();
+                    }
+                }
+
+                // ESC = Limpar busca
+                if (e.key === 'Escape' && elements.searchInput) {
+                    elements.searchInput.value = '';
+                    filtrarVeiculos('');
+                    elements.searchInput.focus();
+                }
+
+                // Ctrl/Cmd + F = Focar busca
+                if ((e.ctrlKey || e.metaKey) && e.key === 'f' && elements.searchInput) {
+                    e.preventDefault();
+                    elements.searchInput.focus();
+                    elements.searchInput.select();
+                }
+            });
+        }
+
+        // Funções globais para paginação (chamadas inline no HTML)
+        window.carregarProximaPagina = carregarProximaPagina;
+        window.carregarPaginaAnterior = carregarPaginaAnterior;
+
+        // 🚀 INICIALIZAÇÃO UNIVERSAL
+        // Funciona tanto quando carregado diretamente quanto via dashboard
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeApp);
+        } else if (document.readyState === 'interactive' || document.readyState === 'complete') {
+            initializeApp();
+        }
+
+        // Para garantir que funciona quando carregado dinamicamente
+        setTimeout(() => {
+            if (!isInitialized) {
+                console.log('🔄 Forçando inicialização tardia...');
+                initializeApp();
+            }
+        }, 1000);
+
+        console.log('🚀 Script de consulta de veículos carregado e pronto!');
+    </script>
+</body>
+
+</html>

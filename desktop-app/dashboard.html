@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard</title>
+  <link rel="stylesheet" href="style_dash.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+</head>
+<body>
+
+  <nav class="sidebar" id="sidebar">
+    <div class="menu-header">U</div>
+    <ul class="menu-categories">
+      <li class="menu-category">
+        <a class="category-header" href="#" data-page="dashControle.html">
+          <i class="fa-solid fa-chart-line"></i>
+          <span>Dashboard</span>
+        </a>
+      </li>
+      <li class="menu-category">
+        <a class="category-header" href="#" data-page="cadastrar-usuario.html">
+          <i class="fa-solid fa-user-plus"></i>
+          <span>Cadastrar Usuário</span>
+        </a>
+      </li>
+      <li class="menu-category">
+        <a class="category-header" href="#" data-page="cadastrar-veiculos.html">
+          <i class="fa-solid fa-car"></i>
+          <span>Cadastrar Veículo</span>
+        </a>
+      </li>
+      <li class="menu-category">
+        <a class="category-header" href="#" data-page="con-usuario.html">
+          <i class="fa-solid fa-user-check"></i>
+          <span>Consultar Usuário</span>
+        </a>
+      </li>
+      <li class="menu-category">
+        <a class="category-header" href="#" data-page="con-veiculos.html">
+          <i class="fa-solid fa-car-side"></i>
+          <span>Consultar Veículo</span>
+        </a>
+      </li>
+      <li class="menu-category">
+        <a class="category-header" href="#" data-page="configuracoes-geral.html">
+          <i class="fa-solid fa-cog"></i>
+          <span>Configurações</span>
+        </a>
+      </li>
+    </ul>
+
+    <div class="menu-logout">
+      <a href="#" id="btnLogout">
+        <i class="fa-solid fa-sign-out-alt"></i>
+        <span>Sair</span>
+      </a>
+    </div>
+  </nav>
+
+  <main class="main-content">
+    <div class="content" id="main-content">
+      <h2>Conteúdo principal</h2>
+      <p>Sistema de gestão consulta cronotacógrafo</p>
+      <div class="alert alert-info">
+        <i class="fa-solid fa-info-circle"></i>
+        Selecione uma opção no menu lateral para começar.
+      </div>
+    </div>
+  </main>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+  const menuLinks = document.querySelectorAll('.category-header[data-page]');
+
+  // Clique nos menus principais
+  menuLinks.forEach(link => {
+    link.addEventListener('click', function(e) {
+      e.preventDefault();
+      loadPage(this.getAttribute('data-page'));
+    });
+  });
+
+  // Logout com confirmação
+  const logoutButton = document.getElementById('btnLogout');
+  if (logoutButton) {
+    logoutButton.addEventListener('click', function (e) {
+      e.preventDefault();
+      Swal.fire({
+        title: 'Sair do Sistema',
+        text: 'Tem certeza que deseja sair?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Sim, sair',
+        cancelButtonText: 'Cancelar'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          window.location.href = 'login.html';
+        }
+      });
+    });
+  }
+});
+
+// Carregamento dinâmico
+function loadPage(pageName) {
+  const mainContent = document.getElementById('main-content');
+  mainContent.innerHTML = '<div class="loading"></div>';
+  setTimeout(() => {
+    fetch(pageName)
+      .then(response => {
+        if (!response.ok) throw new Error('Página não encontrada');
+        return response.text();
+      })
+      .then(html => {
+        mainContent.innerHTML = html;
+        const scripts = mainContent.querySelectorAll('script');
+        scripts.forEach(script => {
+          const newScript = document.createElement('script');
+          newScript.textContent = script.textContent;
+          document.head.appendChild(newScript);
+          document.head.removeChild(newScript);
+        });
+      })
+      .catch(error => {
+        mainContent.innerHTML = `
+          <div class="alert alert-danger">
+            <i class="fa-solid fa-exclamation-triangle"></i>
+            <strong>Erro ao carregar página:</strong> ${pageName}
+            <br>
+            <small>Verifique se o arquivo existe e tente novamente.</small>
+          </div>
+        `;
+      });
+  }, 500);
+}
+
+</script>
+
+</body>
+</html>

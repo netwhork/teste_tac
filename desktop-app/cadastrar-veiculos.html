@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastrar Veículo e Proprietário - DEBUG</title>
+    <link rel="stylesheet" href="style_dash.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <style>
+    body {
+        font-family: Arial, sans-serif;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #f5f5f5;
+    }
+
+    .debug {
+        background: #000;
+        color: #00ff00;
+        padding: 10px;
+        margin: 10px 0;
+        border-radius: 5px;
+        font-family: monospace;
+        font-size: 12px;
+        max-height: 200px;
+        overflow-y: auto;
+    }
+
+    form {
+        background: white;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    h2 {
+        color: #333;
+        text-align: center;
+        margin-bottom: 30px;
+    }
+
+    h3 {
+        color: #555;
+        border-bottom: 2px solid #007bff;
+        padding-bottom: 5px;
+        margin-top: 30px;
+        margin-bottom: 20px;
+    }
+
+    label {
+        display: block;
+        margin-bottom: 15px;
+        font-weight: bold;
+        color: #555;
+    }
+
+    .optional {
+        color: #888;
+        font-weight: normal;
+        font-size: 12px;
+    }
+
+    input[type="text"], input[type="number"] {
+        width: 100%;
+        padding: 10px;
+        border: 2px solid #ddd;
+        border-radius: 5px;
+        font-size: 16px;
+        margin-top: 5px;
+        transition: border-color 0.3s;
+        box-sizing: border-box;
+    }
+
+    input[type="text"]:focus, input[type="number"]:focus {
+        outline: none;
+        border-color: #007bff;
+    }
+
+    button {
+        background-color: #007bff;
+        color: white;
+        padding: 12px 30px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: bold;
+        width: 100%;
+        margin-top: 20px;
+        transition: background-color 0.3s;
+    }
+
+    button:hover {
+        background-color: #0056b3;
+    }
+
+    button:disabled {
+        background-color: #ccc;
+        cursor: not-allowed;
+    }
+
+    .loading {
+        display: none;
+        text-align: center;
+        color: #007bff;
+        margin-top: 10px;
+    }
+
+    .status {
+        padding: 10px;
+        margin: 10px 0;
+        border-radius: 5px;
+        font-weight: bold;
+    }
+
+    .status.success { background: #d4edda; color: #155724; }
+    .status.error { background: #f8d7da; color: #721c24; }
+    .status.warning { background: #fff3cd; color: #856404; }
+    .status.info { background: #d1ecf1; color: #0c5460; }
+
+    .document-type-info {
+        font-size: 12px;
+        color: #666;
+        margin-top: 5px;
+        font-style: italic;
+    }
+    </style>
+</head>
+
+<body>
+    <div class="debug" id="debug-console">
+        [DEBUG] Página carregada...<br>
+    </div>
+
+    <div class="status info" id="status">
+        🔄 Verificando conexão com Firebase...
+    </div>
+
+    <h2>📋 Cadastro de Veículo e Proprietário [DEBUG MODE]</h2>
+
+    <form id="form-cadastro">
+        <h3>🚗 Dados do Veículo</h3>
+        <label>
+            Placa:
+            <input type="text" id="placa" required placeholder="ABC-1234" maxlength="8">
+        </label>
+
+        <label>
+            Renavan:
+            <input type="text" id="renavan" required placeholder="00000000000" maxlength="11">
+        </label>
+
+        <label>
+            Município:
+            <input type="text" id="municipio" required placeholder="Ex: São Paulo">
+        </label>
+
+        <label>
+            Ano:
+            <input type="number" id="ano" required placeholder="2024" min="1900" max="2030">
+        </label>
+
+        <label>
+            Marca:
+            <input type="text" id="marca" required placeholder="Ex: Volkswagen">
+        </label>
+
+        <h3>👤 Dados do Proprietário</h3>
+        <label>
+            CPF/CNPJ:
+            <input type="text" id="documento" required placeholder="000.000.000-00 ou 00.000.000/0001-00" maxlength="18">
+            <div class="document-type-info">Digite CPF (11 dígitos) ou CNPJ (14 dígitos)</div>
+        </label>
+
+        <label>
+            Nome/Razão Social:
+            <input type="text" id="nome" required placeholder="Nome completo ou Razão Social">
+        </label>
+
+        <label>
+            CNH <span class="optional">(opcional)</span>:
+            <input type="text" id="cnh" placeholder="00000000000" maxlength="11">
+            <div class="document-type-info">Se não informado, será salvo como "NÃO INFORMADO"</div>
+        </label>
+
+        <button type="submit" id="btn-cadastrar">
+            💾 Cadastrar Veículo e Proprietário
+        </button>
+
+        <div class="loading" id="loading">
+            🔄 Salvando dados...
+        </div>
+    </form>
+
+    <script>
+        // Sistema de debug
+        function debugLog(message) {
+            const debugConsole = document.getElementById('debug-console');
+            const timestamp = new Date().toLocaleTimeString();
+            debugConsole.innerHTML += `[${timestamp}] ${message}<br>`;
+            debugConsole.scrollTop = debugConsole.scrollHeight;
+            console.log(`[DEBUG] ${message}`);
+        }
+
+        function updateStatus(message, type = 'info') {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = `status ${type}`;
+            debugLog(`STATUS: ${message}`);
+        }
+
+        // Função para validar CPF
+        function validarCPF(cpf) {
+            cpf = cpf.replace(/[^\d]/g, '');
+            if (cpf.length !== 11) return false;
+            if (/^(\d)\1{10}$/.test(cpf)) return false;
+            
+            let soma = 0;
+            for (let i = 0; i < 9; i++) {
+                soma += parseInt(cpf.charAt(i)) * (10 - i);
+            }
+            let resto = 11 - (soma % 11);
+            if (resto === 10 || resto === 11) resto = 0;
+            if (resto !== parseInt(cpf.charAt(9))) return false;
+            
+            soma = 0;
+            for (let i = 0; i < 10; i++) {
+                soma += parseInt(cpf.charAt(i)) * (11 - i);
+            }
+            resto = 11 - (soma % 11);
+            if (resto === 10 || resto === 11) resto = 0;
+            return resto === parseInt(cpf.charAt(10));
+        }
+
+        // Função para validar CNPJ
+        function validarCNPJ(cnpj) {
+            cnpj = cnpj.replace(/[^\d]/g, '');
+            if (cnpj.length !== 14) return false;
+            if (/^(\d)\1{13}$/.test(cnpj)) return false;
+            
+            let tamanho = cnpj.length - 2;
+            let numeros = cnpj.substring(0, tamanho);
+            let digitos = cnpj.substring(tamanho);
+            let soma = 0;
+            let pos = tamanho - 7;
+            
+            for (let i = tamanho; i >= 1; i--) {
+                soma += numeros.charAt(tamanho - i) * pos--;
+                if (pos < 2) pos = 9;
+            }
+            
+            let resultado = soma % 11 < 2 ? 0 : 11 - soma % 11;
+            if (resultado != digitos.charAt(0)) return false;
+            
+            tamanho = tamanho + 1;
+            numeros = cnpj.substring(0, tamanho);
+            soma = 0;
+            pos = tamanho - 7;
+            
+            for (let i = tamanho; i >= 1; i--) {
+                soma += numeros.charAt(tamanho - i) * pos--;
+                if (pos < 2) pos = 9;
+            }
+            
+            resultado = soma % 11 < 2 ? 0 : 11 - soma % 11;
+            return resultado == digitos.charAt(1);
+        }
+
+        // Interceptar erros
+        window.addEventListener('error', (event) => {
+            debugLog(`❌ ERRO JAVASCRIPT: ${event.error?.message || event.message}`);
+            debugLog(`❌ ARQUIVO: ${event.filename}:${event.lineno}:${event.colno}`);
+            updateStatus(`Erro JavaScript detectado! Verifique o console.`, 'error');
+        });
+
+        debugLog('Iniciando carregamento do módulo Firebase...');
+
+        // Teste se conseguimos importar o Firebase
+        import('../firebase/config.js')
+            .then((firebaseModule) => {
+                debugLog('✅ Módulo Firebase carregado com sucesso');
+                debugLog(`✅ Funções disponíveis: ${Object.keys(firebaseModule).join(', ')}`);
+
+                const {
+                    cadastrarVeiculo,
+                    cadastrarProprietario,
+                    vincularProprietarioVeiculo,
+                    getCurrentUser
+                } = firebaseModule;
+
+                if (!cadastrarVeiculo || !cadastrarProprietario || !getCurrentUser) {
+                    debugLog('❌ Algumas funções não foram encontradas no módulo');
+                    updateStatus('Erro: Funções Firebase não encontradas', 'error');
+                    return;
+                }
+
+                debugLog('✅ Todas as funções necessárias foram carregadas');
+                updateStatus('Firebase conectado com sucesso!', 'success');
+
+                // Verificar autenticação
+                debugLog('Verificando autenticação...');
+                getCurrentUser()
+                    .then((user) => {
+                        if (user) {
+                            debugLog(`✅ Usuário autenticado: ${user.uid}`);
+                            updateStatus(`Usuário logado: ${user.email}`, 'success');
+                        } else {
+                            debugLog('❌ Usuário não autenticado');
+                            updateStatus('Usuário não autenticado!', 'error');
+                        }
+                    })
+                    .catch((error) => {
+                        debugLog(`❌ Erro ao verificar autenticação: ${error.message}`);
+                        updateStatus('Erro na verificação de autenticação', 'error');
+                    });
+
+                // Configurar formulário
+                const form = document.getElementById('form-cadastro');
+                const btnCadastrar = document.getElementById('btn-cadastrar');
+                const loading = document.getElementById('loading');
+
+                // Formatação automática dos campos
+                document.getElementById('placa').addEventListener('input', (e) => {
+                    debugLog(`Formatando placa: ${e.target.value}`);
+                    let value = e.target.value.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+                    if (value.length > 3) {
+                        value = value.substring(0, 3) + '-' + value.substring(3, 7);
+                    }
+                    e.target.value = value;
+                });
+
+                // Formatação automática para CPF/CNPJ
+                document.getElementById('documento').addEventListener('input', (e) => {
+                    debugLog(`Formatando documento: ${e.target.value}`);
+                    let value = e.target.value.replace(/\D/g, '');
+                    
+                    if (value.length <= 11) {
+                        // Formatação CPF
+                        if (value.length > 9) {
+                            value = value.substring(0, 3) + '.' + value.substring(3, 6) + '.' + value.substring(6, 9) + '-' + value.substring(9, 11);
+                        } else if (value.length > 6) {
+                            value = value.substring(0, 3) + '.' + value.substring(3, 6) + '.' + value.substring(6);
+                        } else if (value.length > 3) {
+                            value = value.substring(0, 3) + '.' + value.substring(3);
+                        }
+                    } else {
+                        // Formatação CNPJ
+                        if (value.length > 12) {
+                            value = value.substring(0, 2) + '.' + value.substring(2, 5) + '.' + value.substring(5, 8) + '/' + value.substring(8, 12) + '-' + value.substring(12, 14);
+                        } else if (value.length > 8) {
+                            value = value.substring(0, 2) + '.' + value.substring(2, 5) + '.' + value.substring(5, 8) + '/' + value.substring(8);
+                        } else if (value.length > 5) {
+                            value = value.substring(0, 2) + '.' + value.substring(2, 5) + '.' + value.substring(5);
+                        } else if (value.length > 2) {
+                            value = value.substring(0, 2) + '.' + value.substring(2);
+                        }
+                    }
+                    
+                    e.target.value = value;
+                });
+
+                // Listener do formulário
+                form.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    debugLog('📝 Formulário submetido!');
+
+                    try {
+                        debugLog('🔒 Verificando autenticação...');
+                        const user = await getCurrentUser();
+
+                        if (!user) {
+                            debugLog('❌ Usuário não autenticado');
+                            updateStatus('Usuário não autenticado!', 'error');
+                            alert('Usuário não autenticado! Faça login novamente.');
+                            return;
+                        }
+
+                        debugLog(`✅ Usuário autenticado: ${user.uid}`);
+
+                        // Mostrar loading
+                        btnCadastrar.disabled = true;
+                        loading.style.display = 'block';
+                        updateStatus('Salvando dados...', 'info');
+
+                        // Coletar dados do veículo
+                        const veiculoData = {
+                            placa: document.getElementById('placa').value,
+                            renavan: document.getElementById('renavan').value,
+                            municipio: document.getElementById('municipio').value,
+                            ano: document.getElementById('ano').value,
+                            marca: document.getElementById('marca').value
+                        };
+
+                        // Coletar dados do proprietário
+                        const documento = document.getElementById('documento').value;
+                        const cnh = document.getElementById('cnh').value.trim();
+                        
+                        const proprietarioData = {
+                            documento: documento, // Agora é documento (CPF ou CNPJ)
+                            nome: document.getElementById('nome').value,
+                            cnh: cnh || "NÃO INFORMADO" // Se vazio, salva como "NÃO INFORMADO"
+                        };
+
+                        debugLog(`📋 Dados do veículo: ${JSON.stringify(veiculoData)}`);
+                        debugLog(`👤 Dados do proprietário: ${JSON.stringify(proprietarioData)}`);
+
+                        // Validações
+                        if (!veiculoData.placa || veiculoData.placa.length < 7) {
+                            throw new Error('Placa deve ter formato válido (ABC-1234)');
+                        }
+
+                        // Validar documento (CPF ou CNPJ)
+                        const documentoLimpo = documento.replace(/[^\d]/g, '');
+                        if (documentoLimpo.length === 11) {
+                            if (!validarCPF(documento)) {
+                                throw new Error('CPF inválido');
+                            }
+                            debugLog('✅ CPF válido');
+                        } else if (documentoLimpo.length === 14) {
+                            if (!validarCNPJ(documento)) {
+                                throw new Error('CNPJ inválido');
+                            }
+                            debugLog('✅ CNPJ válido');
+                        } else {
+                            throw new Error('Documento deve ser um CPF (11 dígitos) ou CNPJ (14 dígitos) válido');
+                        }
+
+                        debugLog('✅ Validações passaram');
+
+                        // Cadastrar veículo
+                        debugLog('🚗 Cadastrando veículo...');
+                        const resultVeiculo = await cadastrarVeiculo(veiculoData);
+                        debugLog(`🚗 Resultado veículo: ${JSON.stringify(resultVeiculo)}`);
+
+                        if (!resultVeiculo.success) {
+                            throw new Error(`Erro ao cadastrar veículo: ${resultVeiculo.error}`);
+                        }
+
+                        // Cadastrar proprietário
+                        debugLog('👤 Cadastrando proprietário...');
+                        const resultProprietario = await cadastrarProprietario(proprietarioData);
+                        debugLog(`👤 Resultado proprietário: ${JSON.stringify(resultProprietario)}`);
+
+                        if (!resultProprietario.success) {
+                            throw new Error(`Erro ao cadastrar proprietário: ${resultProprietario.error}`);
+                        }
+
+                        // 🔗 VINCULAR PROPRIETÁRIO AO VEÍCULO
+                        debugLog('🔗 Vinculando proprietário ao veículo...');
+                        const resultVinculacao = await vincularProprietarioVeiculo(
+                            resultProprietario.id,
+                            resultVeiculo.id,
+                            proprietarioData.documento,
+                            proprietarioData.nome,
+                            veiculoData.placa
+                        );
+                        debugLog(`🔗 Resultado vinculação: ${JSON.stringify(resultVinculacao)}`);
+
+                        if (!resultVinculacao.success) {
+                            debugLog(`⚠️ Aviso: Erro na vinculação: ${resultVinculacao.error}`);
+                            // Não falhar o cadastro por causa da vinculação
+                        }
+
+                        // Sucesso
+                        debugLog('✅ Cadastro realizado com sucesso!');
+                        updateStatus('Cadastro realizado com sucesso!', 'success');
+
+                        const tipoDocumento = documentoLimpo.length === 11 ? 'CPF' : 'CNPJ';
+                        alert(`✅ Sucesso!\nVeículo ${veiculoData.placa} e proprietário ${proprietarioData.nome} (${tipoDocumento}: ${documento}) cadastrados!\nCNH: ${proprietarioData.cnh}`);
+
+                        // Limpar formulário
+                        form.reset();
+
+                    } catch (error) {
+                        debugLog(`❌ Erro no cadastro: ${error.message}`);
+                        debugLog(`❌ Stack trace: ${error.stack}`);
+                        updateStatus(`Erro: ${error.message}`, 'error');
+                        alert(`❌ Erro: ${error.message}`);
+                    } finally {
+                        btnCadastrar.disabled = false;
+                        loading.style.display = 'none';
+                    }
+                });
+
+                debugLog('✅ Event listeners configurados');
+
+            })
+            .catch((error) => {
+                debugLog(`❌ Erro ao carregar módulo Firebase: ${error.message}`);
+                debugLog(`❌ Stack trace: ${error.stack}`);
+                updateStatus(`Erro crítico: Não foi possível carregar o Firebase`, 'error');
+
+                alert(`❌ Erro crítico ao carregar Firebase:\n${error.message}\n\nVerifique:\n1. Se o arquivo config.js existe\n2. Se o caminho está correto\n3. Se não há erros de sintaxe`);
+            });
+    </script>
+</body>
+
+</html>

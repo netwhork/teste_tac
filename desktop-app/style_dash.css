@@ -1,0 +1,154 @@
+  * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    body {
+      background: #ffffff;
+      display: flex;
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      background: #333333;
+      color: #ffffff;
+      height: 100vh;
+      width: 70px;
+      transition: width 0.3s ease;
+      overflow: hidden;
+      position: fixed;
+      left: 0;
+      top: 0;
+      z-index: 1000;
+    }
+
+    .sidebar:hover {
+      width: 230px;
+    }
+
+    .menu-header {
+      padding: 20px;
+      font-size: 1.2rem;
+      font-weight: bold;
+      text-align: center;
+      background: rgba(255,255,255,0.1);
+      white-space: nowrap;
+    }
+
+    .menu-categories {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .menu-category {
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .category-header {
+      padding: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      gap: 10px;
+      transition: background 0.2s, justify-content 0.2s;
+      color: #fff;
+      text-decoration: none;
+    }
+
+    .sidebar:hover .category-header {
+      justify-content: flex-start;
+    }
+
+    .category-header:hover {
+      background: rgba(255,255,255,0.1);
+    }
+
+    .category-header i {
+      width: 25px;
+      text-align: center;
+      font-size: 1.2rem;
+    }
+
+    .category-header span {
+      display: none;
+      white-space: nowrap;
+    }
+
+    .sidebar:hover .category-header span {
+      display: inline;
+    }
+
+    .menu-logout {
+      position: absolute;
+      bottom: 20px;
+      width: 100%;
+      text-align: center;
+    }
+
+    .menu-logout a {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+      padding: 10px;
+      color: #fff;
+      text-decoration: none;
+    }
+
+    .sidebar:hover .menu-logout a {
+      justify-content: flex-start;
+    }
+
+    .menu-logout span {
+      display: none;
+    }
+
+    .sidebar:hover .menu-logout span {
+      display: inline;
+    }
+
+    .menu-logout a:hover {
+      background: rgba(0, 0, 0, 0.1);
+    }
+
+    .main-content {
+      margin-left: 70px;
+      padding: 20px;
+      transition: margin-left 0.3s ease;
+      flex: 1;
+    }
+
+    .sidebar:hover ~ .main-content {
+      margin-left: 230px;
+    }
+
+    .alert {
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 6px;
+    }
+
+    .alert-info {
+      background: #d9edf7;
+      color: #5e2f08;
+    }
+
+    .loading {
+      width: 30px;
+      height: 30px;
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #2C3E50;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 50px auto;
+    }
+
+    @keyframes spin {
+      100% {
+        transform: rotate(360deg);
+      }
+    }
